@@ -15,7 +15,7 @@ import json
 
 from typing import Any, Dict, List, Optional
 
-import pytest
+from ccai import testbase
 
 from ccai.restclient.azure.azurearmclient import AzureArmClient, LroPoller
 from ccai.restclient.azure.azurearmerror import (
@@ -180,7 +180,7 @@ def test_object_reads_absent_field_as_none():
 def test_object_refuses_private_lookups():
     obj = AzureObject({"name": "x"})
 
-    with pytest.raises(AttributeError):
+    with testbase.raises(AttributeError):
         getattr(obj, "_ipython_canary")
     return
 
@@ -279,7 +279,7 @@ def test_managed_identity_asks_the_metadata_service():
 
 
 def test_incomplete_service_principal_is_refused():
-    with pytest.raises(AzureTokenError):
+    with testbase.raises(AzureTokenError):
         AzureTokenProvider(tenant_id="t", client_id="c",
                            session=FakeSession())
     return
@@ -295,7 +295,7 @@ def test_token_failure_surfaces_the_description():
     provider = AzureTokenProvider(tenant_id="t", client_id="c",
                                   client_secret="s", session=session)
 
-    with pytest.raises(AzureTokenError) as caught:
+    with testbase.raises(AzureTokenError) as caught:
         provider.token(now=0.0)
 
     assert "secret is expired" in str(caught.value)
@@ -326,7 +326,7 @@ def test_404_raises_resource_not_found():
                       payload={"error": {"code": "ResourceGroupNotFound",
                                          "message": "no such group"}}))
 
-    with pytest.raises(ResourceNotFoundError) as caught:
+    with testbase.raises(ResourceNotFoundError) as caught:
         client.request(method="GET", path="/x", api_version="2023-05-01")
 
     # Consumer code catches this name to mean "absent, carry on".
@@ -343,7 +343,7 @@ def test_other_failures_raise_the_general_error():
                       payload={"error": {"code": "AuthorizationFailed",
                                          "message": "denied"}}))
 
-    with pytest.raises(AzureRequestError) as caught:
+    with testbase.raises(AzureRequestError) as caught:
         client.request(method="GET", path="/x", api_version="2023-05-01")
 
     assert isinstance(caught.value, ResourceNotFoundError) is False
@@ -428,7 +428,7 @@ def test_poller_raises_on_a_failed_operation():
     poller = client.begin(method="PUT", path="/vnets/a",
                           api_version="2023-05-01", body={})
 
-    with pytest.raises(AzureOperationError) as caught:
+    with testbase.raises(AzureOperationError) as caught:
         poller.result(60)
 
     assert "QuotaExceeded" in str(caught.value)
@@ -449,7 +449,7 @@ def test_poller_timeout_is_distinct_from_failure():
     poller = client.begin(method="PUT", path="/vnets/a",
                           api_version="2023-05-01", body={})
 
-    with pytest.raises(AzureOperationTimeout) as caught:
+    with testbase.raises(AzureOperationTimeout) as caught:
         poller.result(0)
 
     # The operation may still be running, so this must not be reported as a
