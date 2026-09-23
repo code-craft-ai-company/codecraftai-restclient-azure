@@ -17,7 +17,7 @@ __copyright__ = "Copyright 2026, Code Craft AI LLC"
 __credits__ = []
 
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from ccai.restclient.azure.apigroups.armcollection import ArmCollection
 from ccai.restclient.azure.azureobject import AzureObject

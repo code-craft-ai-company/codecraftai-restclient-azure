@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional
 
 from ccai import testbase
 
-from ccai.restclient.azure.azurearmclient import AzureArmClient, LroPoller
+from ccai.restclient.azure.azurearmclient import AzureArmClient
 from ccai.restclient.azure.azurearmerror import (
     AzureOperationError, AzureOperationTimeout, AzureRequestError,
     ResourceNotFoundError
