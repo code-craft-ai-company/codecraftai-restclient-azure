@@ -575,6 +575,129 @@ def test_storage_account_create_is_long_running():
     return
 
 
+_CONTAINER_PATH = ("/subscriptions/sub-123/resourceGroups/rg-a/providers/"
+                   "Microsoft.Storage/storageAccounts/acct/blobServices/"
+                   "default/containers")
+
+
+def test_blob_container_create_path_is_nested_under_its_account():
+    clients, session = _clients()
+
+    clients["storage"].blob_containers.create(
+        resource_group_name="rg-a", account_name="acct",
+        container_name="cont-a", blob_container={"properties": {}})
+
+    call = session.calls[0]
+    assert call["method"] == "PUT"
+    assert call["url"].endswith(_CONTAINER_PATH + "/cont-a")
+    assert call["params"]["api-version"] == "2023-01-01"
+    return
+
+
+def test_blob_container_create_sends_the_blob_container_body():
+    clients, session = _clients()
+
+    clients["storage"].blob_containers.create(
+        resource_group_name="rg-a", account_name="acct",
+        container_name="cont-a",
+        blob_container={"properties": {"publicAccess": "None"}})
+
+    # The body keyword is blob_container, the SDK's spelling.
+    assert session.calls[0]["body"] == {
+        "properties": {"publicAccess": "None"}}
+    return
+
+
+def test_blob_container_create_returns_the_container():
+    clients, session = _clients()
+    session.queue(method="PUT", match="containers/cont-a",
+                  response=FakeResponse(status_code=201,
+                                        payload={"name": "cont-a"}))
+
+    created = clients["storage"].blob_containers.create(
+        resource_group_name="rg-a", account_name="acct",
+        container_name="cont-a", blob_container={})
+
+    # Container writes are synchronous: the resource, not a poller.
+    assert created.name == "cont-a"
+    return
+
+
+def test_blob_container_create_failure_propagates():
+    clients, session = _clients()
+    session.queue(method="PUT", match="containers/cont-a",
+                  response=FakeResponse(
+                      status_code=403, reason="Forbidden",
+                      payload={"error": {"code": "AuthorizationFailed",
+                                         "message": "denied"}}))
+
+    with testbase.raises(AzureRequestError) as caught:
+        clients["storage"].blob_containers.create(
+            resource_group_name="rg-a", account_name="acct",
+            container_name="cont-a", blob_container={})
+
+    assert caught.value.code == "AuthorizationFailed"
+    return
+
+
+def test_blob_container_get_path():
+    clients, session = _clients()
+
+    clients["storage"].blob_containers.get(
+        resource_group_name="rg-a", account_name="acct",
+        container_name="cont-a")
+
+    call = session.calls[0]
+    assert call["method"] == "GET"
+    assert call["url"].endswith(_CONTAINER_PATH + "/cont-a")
+    return
+
+
+def test_blob_container_get_of_an_absent_container_raises_not_found():
+    clients, session = _clients()
+    session.queue(method="GET", match="containers/cont-a",
+                  response=FakeResponse(
+                      status_code=404, reason="Not Found",
+                      payload={"error": {"code": "ContainerNotFound",
+                                         "message": "no such container"}}))
+
+    # Consumer code catches this name to mean "absent, create it".
+    with testbase.raises(ResourceNotFoundError) as caught:
+        clients["storage"].blob_containers.get(
+            resource_group_name="rg-a", account_name="acct",
+            container_name="cont-a")
+
+    assert caught.value.code == "ContainerNotFound"
+    return
+
+
+def test_blob_container_delete_path():
+    clients, session = _clients()
+
+    clients["storage"].blob_containers.delete(
+        resource_group_name="rg-a", account_name="acct",
+        container_name="cont-a")
+
+    call = session.calls[0]
+    assert call["method"] == "DELETE"
+    assert call["url"].endswith(_CONTAINER_PATH + "/cont-a")
+    return
+
+
+def test_blob_container_list_reads_the_account_collection():
+    clients, session = _clients()
+    session.queue(method="GET", match="default/containers",
+                  response=FakeResponse(payload={
+                      "value": [{"name": "cont-a"}, {"name": "cont-b"}]}))
+
+    found = clients["storage"].blob_containers.list(
+        resource_group_name="rg-a", account_name="acct")
+
+    assert session.calls[0]["url"].endswith(_CONTAINER_PATH)
+    assert [entry.name for entry in found] == ["cont-a", "cont-b"]
+    return
+
+
 def test_all_five_management_clients_share_one_transport():
     clients, session = _clients()
 

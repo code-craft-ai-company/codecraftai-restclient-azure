@@ -66,7 +66,8 @@ source/packages/ccai/restclient/azure/
     ├── armcollection.py      # ArmCollection
     ├── computecollections.py # VirtualMachines, VirtualMachineExtensions,
     │                         #   Disks, ProximityPlacementGroups,
-    │                         #   StorageAccounts, ResourceGroups
+    │                         #   StorageAccounts, BlobContainers,
+    │                         #   ResourceGroups
     └── networkcollections.py # VirtualNetworks, Subnets, NetworkInterfaces,
                               #   NetworkSecurityGroups, PublicIpAddresses,
                               #   RecordSets

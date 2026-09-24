@@ -231,8 +231,8 @@ names the SDK used so that call sites do not change.
    `network_interfaces`, `network_security_groups`, `public_ip_addresses`),
    `ComputeManagementClient` (`virtual_machines`,
    `virtual_machine_extensions`, `disks`, `proximity_placement_groups`),
-   `StorageManagementClient` (`storage_accounts`), and `DnsManagementClient`
-   (`record_sets`).
+   `StorageManagementClient` (`storage_accounts`, `blob_containers`), and
+   `DnsManagementClient` (`record_sets`).
 2. THE SYSTEM SHALL have all five share ONE `AzureArmClient` transport,
    because ARM is a single API and the SDK's split into packages is packaging
    rather than protocol.

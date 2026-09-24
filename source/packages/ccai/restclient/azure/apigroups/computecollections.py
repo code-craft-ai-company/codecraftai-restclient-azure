@@ -392,6 +392,144 @@ class StorageAccountsCollection(ArmCollection):
         return rtnval
 
 
+class BlobContainersCollection(ArmCollection):
+    """
+        The blob containers collection.
+
+        This is the ARM management plane for containers, not the blob data
+        plane: containers are children of a storage account's single
+        ``default`` blob service, so every path carries the parent account
+        and ``blobServices/default``.
+
+        Container writes are not long-running, so the methods return the
+        resource directly rather than a poller — matching the SDK, which
+        exposes them without the ``begin_`` prefix.
+    """
+
+    PROVIDER = "Microsoft.Storage"
+    RESOURCE_TYPE = "storageAccounts"
+    API_VERSION = STORAGE_API_VERSION
+
+    def _container_collection_path(self, *, resource_group_name: str,
+                                   account_name: str) -> str:
+        """
+            Build the containers collection path under a storage account.
+
+            :param resource_group_name: The resource group.
+            :param account_name: The parent storage account.
+
+            :returns: The collection path.
+        """
+        rtnval = "{}/blobServices/default/containers".format(
+            self._item_path(resource_group_name=resource_group_name,
+                            name=account_name))
+        return rtnval
+
+    def _container_item_path(self, *, resource_group_name: str,
+                             account_name: str,
+                             container_name: str) -> str:
+        """
+            Build one container's path.
+
+            :param resource_group_name: The resource group.
+            :param account_name: The parent storage account.
+            :param container_name: The container name.
+
+            :returns: The item path.
+        """
+        rtnval = "{}/{}".format(
+            self._container_collection_path(
+                resource_group_name=resource_group_name,
+                account_name=account_name), container_name)
+        return rtnval
+
+    def get(self, *, resource_group_name: str, account_name: str,
+            container_name: str) -> AzureObject:
+        """
+            Fetch one container.
+
+            :param resource_group_name: The resource group.
+            :param account_name: The parent storage account.
+            :param container_name: The container name.
+
+            :returns: The container.
+
+            :raises: :class:`ResourceNotFoundError` when the container, the
+                account or the resource group does not exist.
+        """
+        rtnval = self._client.request(
+            method="GET",
+            path=self._container_item_path(
+                resource_group_name=resource_group_name,
+                account_name=account_name, container_name=container_name),
+            api_version=self.API_VERSION)
+        return rtnval
+
+    def list(self, *, resource_group_name: str,
+             account_name: str) -> List[AzureObject]:
+        """
+            List a storage account's containers.
+
+            :param resource_group_name: The resource group.
+            :param account_name: The parent storage account.
+
+            :returns: The containers.
+        """
+        rtnval = self._client.paginate(
+            path=self._container_collection_path(
+                resource_group_name=resource_group_name,
+                account_name=account_name),
+            api_version=self.API_VERSION)
+        return rtnval
+
+    def create(self, *, resource_group_name: str, account_name: str,
+               container_name: str,
+               blob_container: Dict[str, Any]) -> AzureObject:
+        """
+            Create a container.
+
+            The body keyword is ``blob_container``, not ``parameters``; that
+            is the SDK's spelling for this collection and what consumer code
+            passes.  ARM answers the PUT synchronously and treats it as
+            create-or-replace, so there is no poller and no already-exists
+            answer to handle.
+
+            :param resource_group_name: The resource group.
+            :param account_name: The parent storage account.
+            :param container_name: The container name.
+            :param blob_container: The container body, e.g.
+                ``{"properties": {"publicAccess": "None"}}``.
+
+            :returns: The container.
+        """
+        rtnval = self._client.request(
+            method="PUT",
+            path=self._container_item_path(
+                resource_group_name=resource_group_name,
+                account_name=account_name, container_name=container_name),
+            api_version=self.API_VERSION, body=blob_container)
+        return rtnval
+
+    def delete(self, *, resource_group_name: str, account_name: str,
+               container_name: str) -> AzureObject:
+        """
+            Delete a container.
+
+            :param resource_group_name: The resource group.
+            :param account_name: The parent storage account.
+            :param container_name: The container name.
+
+            :returns: The decoded response.
+        """
+        rtnval = self._client.request(
+            method="DELETE",
+            path=self._container_item_path(
+                resource_group_name=resource_group_name,
+                account_name=account_name, container_name=container_name),
+            api_version=self.API_VERSION)
+        return rtnval
+
+
 class ResourceGroupsCollection:
     """
         The resource groups collection.

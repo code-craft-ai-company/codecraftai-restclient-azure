@@ -21,9 +21,10 @@ __credits__ = []
 from typing import Any
 
 from ccai.restclient.azure.apigroups.computecollections import (
-    DisksCollection, ProximityPlacementGroupsCollection,
-    ResourceGroupsCollection, StorageAccountsCollection,
-    VirtualMachineExtensionsCollection, VirtualMachinesCollection
+    BlobContainersCollection, DisksCollection,
+    ProximityPlacementGroupsCollection, ResourceGroupsCollection,
+    StorageAccountsCollection, VirtualMachineExtensionsCollection,
+    VirtualMachinesCollection
 )
 from ccai.restclient.azure.apigroups.networkcollections import (
     NetworkInterfacesCollection, NetworkSecurityGroupsCollection,
@@ -143,6 +144,8 @@ class StorageManagementClient:
         self._arm_client = arm_client
         self.storage_accounts: StorageAccountsCollection = (
             StorageAccountsCollection(client=arm_client))
+        self.blob_containers: BlobContainersCollection = (
+            BlobContainersCollection(client=arm_client))
         return
 
     @property
