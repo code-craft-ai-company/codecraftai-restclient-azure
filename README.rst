@@ -42,7 +42,7 @@ Design notes
 
 **Responses flatten ``properties``.** ARM nests most of a resource's state
 under ``properties``, while the SDK's models flattened it — consumer code reads
-``vnet.address_space``.  :class:`AzureObject` resolves the literal key first,
+``vnet.address_space``.  ``AzureObject`` resolves the literal key first,
 then a spelling-insensitive match, then repeats both inside ``properties``.
 The top level wins, so a resource's own ``id`` / ``name`` / ``location`` are
 never shadowed by a same-named property.
@@ -61,8 +61,8 @@ it was fetched for — mid-apply.
 
 **Long-running operations are distinguished from failures.** A mutation that
 ARM answers synchronously is not turned into a wait.  A poller that reaches
-``Failed``/``Canceled`` raises :class:`AzureOperationError`; one that runs out
-of time raises :class:`AzureOperationTimeout`, which is deliberately a
+``Failed``/``Canceled`` raises ``AzureOperationError``; one that runs out
+of time raises ``AzureOperationTimeout``, which is deliberately a
 different type — the operation may still be running, so reporting it as a
 failure would be wrong.
 
